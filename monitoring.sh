@@ -4,7 +4,7 @@
 #####                                                                                    ######
 #####                          Funkcje do monitoringu                                    ######
 #####                                                                                    ######
-#####                              wersja: 5.1                                           ######
+#####                              wersja: 5.2                                           ######
 #####                                                                                    ######
 #####        Uruchom "./functions.sh --update" aby pobrać aktualną wersję                ######
 #####                "./functions.sh --force-update" - nie wymaga potwierdzenia          ######
@@ -738,7 +738,7 @@ function loggrep {
         then
         #Previously there were more lines, so it must be a new file
         rm -rf $counter_file
-        loggrep $1 $2 $3
+        loggrep $1
         exit 1
         fi
 
