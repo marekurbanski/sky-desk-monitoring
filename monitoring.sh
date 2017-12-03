@@ -715,7 +715,7 @@ function loggrep {
 
     filename=$2
     filename_temp=$(basename "$filename")
-    temp_dir='loggrep'
+    temp_dir="$HOME/.logtail2"
     counter_file="$temp_dir/tail_$filename_temp.last"
     temp_filename="$temp_dir/$filename_temp.tmp"
 
@@ -729,6 +729,17 @@ function loggrep {
         last='0'
     else
         last=`cat $counter_file | xargs`
+        fi
+
+
+    act=`awk '1' $1 | wc -l`
+
+    if [ $((act-last)) -lt 0 ]
+        then
+        #Previously there were more lines, so it must be a new file
+        rm -rf $counter_file
+        loggrep $1 $2 $3
+        exit 1
         fi
 
     last2=$(($last + 1))
