@@ -343,7 +343,7 @@ if [ "$install_now" = "1" ]
 
     #ret=`cat check.sh | grep 'include/config' | wc -l | xargs`
     #if [ "$ret" = "0" ]
-    #    then
+        #then
         data=`date +"%Y-%m-%d %H:%M:%S"`
         echo "#!/usr/bin/env bash" > _check.sh
 	    echo 'source $(dirname $0)/include/config' >> _check.sh
@@ -355,6 +355,10 @@ if [ "$install_now" = "1" ]
         echo '####################################################' >> _check.sh
         echo '## poniżej skrypty monitorujące                   ##' >> _check.sh
         echo "## ostatnia aktualizacja: $data     ##" >> _check.sh
+        echo '##                                                ##' >> _check.sh
+        echo '## UWAGA, wszyskie testy bez słowa "check"        ##' >> _check.sh
+        echo '##        w nazwie będą usunięte !!!!             ##' >> _check.sh
+        echo '##                                                ##' >> _check.sh
         echo '####################################################' >> _check.sh
         echo '' >> _check.sh
 
