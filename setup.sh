@@ -202,6 +202,7 @@ if [ "$update" = "yes" ]
 	echo ""
 	echo "Gotowe... :)"
 	echo ""
+	exit
 	fi
 
 
@@ -590,7 +591,7 @@ if [ "$install_now" = "1" ]
             sudo echo "##### MONITORING #####"  >> /etc/crontab
             sudo echo ""  >> /etc/crontab
             sudo echo "*/5 * * * * root $SCRIPTPATH/check.sh" >> /etc/crontab
-            sudo echo "1 1 * * * root $SCRIPTPATH/functions.sh --force-update" >> /etc/crontab
+            sudo echo "1 1 * * * root $SCRIPTPATH/setup.sh --update" >> /etc/crontab
             sudo echo ""  >> /etc/crontab
             sudo echo "##### KONIEC MONITORINGU #####"  >> /etc/crontab
 
@@ -600,7 +601,7 @@ if [ "$install_now" = "1" ]
             echo "##### MONITORING #####"  >> /etc/crontab
             echo ""  >> /etc/crontab
             echo "*/5 * * * * root $SCRIPTPATH/check.sh" >> /etc/crontab
-            echo "1 1 * * * root $SCRIPTPATH/functions.sh --force-update" >> /etc/crontab
+            echo "1 1 * * * root $SCRIPTPATH/setup.sh --update" >> /etc/crontab
             echo ""  >> /etc/crontab
             echo "##### KONIEC MONITORINGU #####"  >> /etc/crontab
             fi
@@ -623,10 +624,6 @@ if [ "$install_now" = "1" ]
     echo ""
     echo "Wygląda OK. Jeśli chcesz to przeedytuj skrypt 'check.sh' na własne potrzeby..."
     echo "Poniżej lista opcji uruchamiania:"
-    echo ""
-    echo "  './functions.sh --install' - uruchamia proces instalacji / konfiguracji"
-    echo "  './functions.sh --update'  - uruchamia proces aktualizacji interaktywnej"
-    echo "  './functions.sh --force-update - uruchamia automatyczną aktualizację"
     echo ""
     echo ""
 
