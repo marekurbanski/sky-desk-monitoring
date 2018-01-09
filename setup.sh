@@ -149,10 +149,6 @@ if [ "$1" = "--update" ]
 
 if [ "$update" = "yes" ]
     then
-    check_package "curl"
-    check_package "md5sum"
-    check_package "free"
-
     vold=`cat version.txt | xargs`
     rm -rf version.txt
     wget --no-check-certificate https://sky-desk.eu/download/monitoring/version.txt
@@ -216,13 +212,17 @@ install_now='1'
 if [ "$install_now" = "1" ]
     then
     clear
-
     echo "########################################################################### "
     echo "#                                                                "
     echo "#  Instalacja skryptu monitoringu                                "
     echo "#                                                                "
     echo "########################################################################### "
-    
+
+    check_package "curl"
+    check_package "md5sum"
+    check_package "free"
+
+
     # tworznie katalogu z archiwami
     if [ ! -d "archive" ]
         then
@@ -515,8 +515,105 @@ if [ "$install_now" = "1" ]
         fi
 
 
+	# sprawdzanie uptime w dniach
+    ret=`cat check.sh | grep 'check_uptime_days' | wc -l | xargs`
+    if [ "$ret" = "0" ]
+        then
+        echo ""
+        echo "------------------------------- Pytanie ----------------------------------------- "
+        echo ""
+        read -p "Czy chcesz dodać monitoring uptime ? [t/N]" -n 1 -r
+        echo ""
+        if [[ $REPLY =~ ^[Tt]$ ]]
+            then
+            read -p "Podaj minimalną liczbę dni [ np: 7 ] = " min_days
+            read -p "Podaj maksymalną liczbę dni [ np: 365 ] = " max_days
+            sID=$(get_data_from_server $userID $companyAPI "get_set_monitor^$assetID^$min_days^$max_days^Uptime [dni]")
+            echo "check_uptime_days $sID" >> check.sh
+            fi
+        fi
+
+
+	# sprawdzanie transferu sieciowego
+    ret=`cat check.sh | grep 'check_lan_interface_tx' | wc -l | xargs`
+    if [ "$ret" = "0" ]
+        then
+        echo ""
+        echo "------------------------------- Pytanie ----------------------------------------- "
+        echo ""
+        read -p "Czy chcesz dodać monitoring transferu sieciowego tx/tr dla $interface ? [t/N]" -n 1 -r
+        echo ""
+        if [[ $REPLY =~ ^[Tt]$ ]]
+            then
+            for i in `ip link show | grep 'state' | cut -d':' -f 2 | grep -v 'lo'`
+                do
+                interface=`echo $i | xargs`
+                read -p "Dodać interfejs '$interface' ? [t/N]" -n 1 -r
+                echo ""
+                if [[ $REPLY =~ ^[Tt]$ ]]
+                    then
+                    echo "Dostępne interfejsy sieciowe:"
+                    ip link show | grep 'state' | cut -d':' -f 2 | grep -v 'lo'
+
+                    read -p "Podaj minimalny transfer pobierania RX dla $interface w kb [ np: 0 ] = " min_rx
+                    read -p "Podaj maksymalny transfer pobierania RX dla $interface w kb [ np: 1024 ] = " max_rx
+                    read -p "Podaj minimalny transfer wysyłania TX dla $interface w kb [ np: 0 ] = " min_tx
+                    read -p "Podaj maksymalny transfer wysyłania TX dla $interface w kb [ np: 1024 ] = " max_tx
+
+                    sID=$(get_data_from_server $userID $companyAPI "get_set_monitor^$assetID^$min_tx^$max_tx^$interface TX")
+                    echo "check_lan_interface_tx $sID '$interface'" >> check.sh
+                    sID=$(get_data_from_server $userID $companyAPI "get_set_monitor^$assetID^$min_rx^$max_rx^$interface RX")
+                    echo "check_lan_interface_rx $sID '$interface'" >> check.sh
+                    fi
+                 done
+            fi
+        fi
+
+
+   # sprawdzanie ilosci uruchomionych procesow w pamieci
+   ret=`cat check.sh | grep 'check_running_process_count' | wc -l | xargs`
+    if [ "$ret" != "0" ]
+        then
+        echo "INFO: Lista poniższych procesów jest już monitorowana:"
+        cat check.sh | grep 'check_running_process_count' | grep -v '#'
+        fi
+
+	echo ""
+	echo "------------------------------- Pytanie ----------------------------------------- "
+	echo ""
+	read -p "Czy chcesz dodać sprawdzanie liczby otwartych procesów ? [t/N]" -n 1 -r
+	echo ""
+	if [[ $REPLY =~ ^[Tt]$ ]]
+	    then
+	    while [ "$processName" != "0" ]
+		do
+		echo ""
+		echo "------------------------------- Pytanie ----------------------------------------- "
+		echo ""
+		echo "Podaj nazwę procesu którego liczbę uruchomień chcesz monitorować [ jeśli nie chcesz dodawać więcej portów wpisz '0' lub naciśnij ENTER bez wpisywania niczego ]"
+		read -p "Nazwa procesu = " processName
+		if [ "$processName" = "" ]
+		    then
+		    processName="0"
+		    fi
+		if [ "$processName" != "0" ]
+		    then
+		    echo ""
+		    echo "------------------------------- Pytanie ----------------------------------------- "
+		    echo ""
+		    read -p "Podaj minimalną liczbę wystąpień danego procesu = " min_count
+		    read -p "Podaj maksymalną liczbę wystąpień danego procesu = " max_count
+
+			sID=$(get_data_from_server $userID $companyAPI "get_set_monitor^$assetID^$min_count^$max_count^Uruchomionych: $processName")
+		    echo "check_running_process_count $sID '$processName'" >> check.sh
+		    fi
+		done
+	    fi
+	fi
+
+
 	# sprawdzanie otwartych portów
-    ret=`cat check.sh | grep 'check_mysql_processcount' | wc -l | xargs`
+    ret=`cat check.sh | grep 'check_port_open' | wc -l | xargs`
     if [ "$ret" != "0" ]
         then
         echo "INFO: Poniższe porty są już monitorowane:"
@@ -567,9 +664,6 @@ if [ "$install_now" = "1" ]
 		    fi
 		done
 	    fi
-
-
-	    
 	fi
 
 

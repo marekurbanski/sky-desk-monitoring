@@ -189,6 +189,13 @@ function check_cpu_load {
     }
 
 
+
+function check_running_process_count {
+    res=`ps -ax | grep $2 | grep -v 'grep' | wc -l | xargs`
+    save_result $1 $res
+    }
+
+
 function check_memory_usage {
     res=`free | grep -e Mem -e Pami | awk '{print $3/$2 * 100.0}'`
     save_result $1 $res
@@ -285,3 +292,79 @@ function check_logged_users {
     save_result $1 $count
     }
 
+
+function check_uptime_hour {
+
+    if [ -f /proc/uptime ]
+        then
+        sec=`cat /proc/uptime | cut -d' ' -f1 | cut -d"." -f1 | xargs`
+        else
+        sec=`sysctl -n kern.boottime | cut -c14-18 | xargs`
+        fi
+
+    hour=$(( $sec / 3600 ))
+    save_result $1 $hour
+    }
+
+
+function check_uptime_days {
+
+    if [ -f /proc/uptime ]
+        then
+        sec=`cat /proc/uptime | cut -d' ' -f1 | cut -d"." -f1 | xargs`
+    else
+        sec=`sysctl -n kern.boottime | cut -c14-18 | xargs`
+        fi
+
+    days=$(( $sec / 86400 ))
+    save_result $1 $days
+    }
+
+
+function check_lan_interface_tx {
+
+    interface=$2
+    tx2=$(cat "/sys/class/net/${interface}/statistics/tx_bytes")
+    f_tx="$HOME/.monitoring/check_tx"
+    if [ ! -d $HOME/.monitoring ]
+        then
+        mkdir $HOME/.monitoring
+        echo $rx2 > $f_rx
+        echo $tx2 > $f_tx
+        fi
+
+    tx1=`cat $f_tx`
+
+    tx_bps=$((tx2 - tx1))
+    tx_kbps=$((tx_bps / 1024))
+
+    echo $tx2 > $f_tx
+
+    save_result $1 $tx_kbps
+    }
+
+
+function check_lan_interface_rx {
+
+    interface=$2
+
+    rx2=$(cat "/sys/class/net/${interface}/statistics/rx_bytes")
+    f_rx="$HOME/.monitoring/check_rx"
+
+    if [ ! -d $HOME/.monitoring ]
+        then
+        mkdir $HOME/.monitoring
+        echo $rx2 > $f_rx
+        echo $tx2 > $f_tx
+        fi
+
+    rx1=`cat $f_rx`
+
+    rx_bps=$((rx2 - rx1))
+    rx_kbps=$((rx_bps / 1024))
+
+    echo $rx2 > $f_rx
+
+    save_result $1 $rx_kbps
+    }
+ip link show | grep 'state' | cut -d':' -f 2 | grep -v 'lo' | wc -l
