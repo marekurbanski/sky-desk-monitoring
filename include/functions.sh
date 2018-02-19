@@ -80,6 +80,11 @@ function check_package {
 
 	if [ -n "$(command -v yum)" ]
 	    then
+	    if [ "$1" = "snmp" ]
+	        then
+	        $1="net-snmp-utils"
+	        fi
+
 	    if [ -n "$(command -v sudo)" ]
 		then
 		echo "Używam yum. Podaj hasło roota..."
@@ -367,4 +372,43 @@ function check_lan_interface_rx {
 
     save_result $1 $rx_kbps
     }
-ip link show | grep 'state' | cut -d':' -f 2 | grep -v 'lo' | wc -l
+
+
+
+
+
+function check_snmp_oid {
+    
+    res=`snmpget -v 1 -c public $2 $3 | rev | cut -d':' -f1 | rev | xargs`
+    
+    save_result $1 $res
+    }
+    
+
+
+function check_snmp_oid_increase {
+
+    if [ "$4" != "" ]; then divide=$4; else divide='1'; fi 
+
+    v_act=`snmpget -v 1 -c public $2 $3 | rev | cut -d':' -f1 | rev | xargs`
+
+    f_prev="$HOME/.monitoring/$3"
+
+    if [ ! -d $HOME/.monitoring ]
+        then
+        mkdir $HOME/.monitoring
+        echo $v_act > $f_prev
+        fi
+
+    v_prev=`cat $f_prev`
+
+    res=$(($v_act - $v_prev))
+    res_div=$((rx_bps / $divide))
+
+    echo $v_act > $f_prev
+
+    save_result $1 $res_div
+    }
+    
+    
+    

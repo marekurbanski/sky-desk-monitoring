@@ -18,9 +18,12 @@
 ##
 ##	curl
 ##	md5sum
-##  md5
-##  md5sha1sum
+##  	md5
+##  	md5sha1sum
 ##	free
+##	python
+##	snmp
+##	nc
 ###
 
 
@@ -86,14 +89,19 @@ function check_package {
         echo "Nie znalazłem paczki '$1' - będę ją instalował"
 	if [ -n "$(command -v apt-get)" ]
 	    then
+	    if [ "$1" = "nc" ]
+	        then
+	        $1="netcat"
+	    fi
+
 	    if [ -n "$(command -v sudo)" ]
 		then
-		echo "Używam apt-get. Podaj hasło roota..."
-		sudo apt-get update
-		sudo apt-get install $1
+		    echo "Używam apt-get. Podaj hasło roota..."
+		    sudo apt-get update
+		    sudo apt-get install $1
 		else
-		apt-get update
-		apt-get install $1
+		    apt-get update
+		    apt-get install $1
 		fi
 	    fi
 
@@ -192,14 +200,14 @@ if [ "$update" = "yes" ]
     wget --no-check-certificate https://sky-desk.eu/download/monitoring/setup.sh
 
     chmod 777 setup.sh
-	cat functions.sh > include/functions.sh
+    cat functions.sh > include/functions.sh
     rm -rf functions.sh
 
-	echo ""
-	echo "Gotowe... :)"
-	echo ""
-	exit
-	fi
+    echo ""
+    echo "Gotowe... :)"
+    echo ""
+    exit
+    fi
 
 
 
@@ -220,8 +228,8 @@ if [ "$install_now" = "1" ]
 
     check_package "curl"
     check_package "md5sum"
-    check_package "free"
-
+#    check_package "free"
+    check_package "python"
 
     # tworznie katalogu z archiwami
     if [ ! -d "archive" ]
@@ -233,6 +241,17 @@ if [ "$install_now" = "1" ]
         then
         mkdir include
         fi
+
+
+    if [ ! -f "include/functions.sh" ]
+        then
+	wget --no-check-certificate https://sky-desk.eu/download/monitoring/include/functions.sh
+	cat functions.sh > include/functions.sh
+	rm -rf functions.sh
+	chmod 777 include/functions.sh
+        fi
+
+
 
     if [ -f "include/config" ]
         then
@@ -252,22 +271,22 @@ if [ "$install_now" = "1" ]
         echo "Poprzedni user_id = $userID"
         else
 
-        if [ -f "check.sh" ]
-            then
-            echo "Sprawdzam poprzedni plik check.sh"
-            userID=`cat check.sh | grep user_id | cut -d "'" -f2`
-            companyAPI=`cat check.sh | grep api_key | cut -d "'" -f2`
+    	    if [ -f "check.sh" ]
+        	then
+        	echo "Sprawdzam poprzedni plik check.sh"
+        	userID=`cat check.sh | grep user_id | cut -d "'" -f2`
+        	companyAPI=`cat check.sh | grep api_key | cut -d "'" -f2`
 
-            echo "Poprzednie userID = $userID"
-            echo "Poprzednie companyAPI = $companyAPI"
+        	echo "Poprzednie userID = $userID"
+        	echo "Poprzednie companyAPI = $companyAPI"
 
-            if [ -f "cat ${TMPDIR}sky_desk_server" ]
-                then
-                url=`cat ${TMPDIR}sky_desk_server`
-                server=$url
-                fi
-            fi
-        fi
+        	if [ -f "cat ${TMPDIR}sky_desk_server" ]
+            	    then
+            	    url=`cat ${TMPDIR}sky_desk_server`
+            	    server=$url
+            	    fi
+        	fi
+    	    fi
 
     while [ "$server" = "" ]
 	do
@@ -440,7 +459,7 @@ if [ "$install_now" = "1" ]
             if [[ $REPLY =~ ^[Tt]$ ]]
                 then
                 sID=$(get_data_from_server $userID $companyAPI "get_set_monitor^$assetID^0^90^HDD [% usage] $dd")
-                echo "check_hdd_size $sID '$dd'" >> check.sh
+                echo "check_hdd_size $sID '$dd'" >> _check.sh
                 fi
             fi
         done
@@ -457,7 +476,7 @@ if [ "$install_now" = "1" ]
         if [[ $REPLY =~ ^[Tt]$ ]]
             then
             sID=$(get_data_from_server $userID $companyAPI "get_set_monitor^$assetID^0^95^Memory usage")
-            echo "check_memory_usage $sID" >> check.sh
+            echo "check_memory_usage $sID" >> _check.sh
             fi
         fi
 
@@ -473,7 +492,7 @@ if [ "$install_now" = "1" ]
         if [[ $REPLY =~ ^[Tt]$ ]]
             then
             sID=$(get_data_from_server $userID $companyAPI "get_set_monitor^$assetID^0^3^CPU Load")
-            echo "check_cpu_load $sID" >> check.sh
+            echo "check_cpu_load $sID" >> _check.sh
             fi
         fi
 
@@ -489,7 +508,7 @@ if [ "$install_now" = "1" ]
         if [[ $REPLY =~ ^[Tt]$ ]]
             then
             sID=$(get_data_from_server $userID $companyAPI "get_set_monitor^$assetID^0^0^Logged users")
-            echo "check_logged_users $sID" >> check.sh
+            echo "check_logged_users $sID" >> _check.sh
             fi
         fi
 
@@ -507,10 +526,10 @@ if [ "$install_now" = "1" ]
             read -p "Podaj użytkownika do MySQLa [ np: root ] = " mysqlUser
             read -s -p "Podaj hasło $mysqlUser do MySQLa = " mysqlPass
             sID=$(get_data_from_server $userID $companyAPI "get_set_monitor^$assetID^0^20^MySQL - process count")
-            echo "check_mysql_processcount $sID $mysqlUser $mysqlPass" >> check.sh
+            echo "check_mysql_processcount $sID $mysqlUser $mysqlPass" >> _check.sh
 
             sID=$(get_data_from_server $userID $companyAPI "get_set_monitor^$assetID^0^20^MySQL - long process count > 1 min")
-            echo "check_mysql_processcount $sID $mysqlUser $mysqlPass" >> check.sh
+            echo "check_mysql_processcount $sID $mysqlUser $mysqlPass" >> _check.sh
             fi
         fi
 
@@ -529,7 +548,7 @@ if [ "$install_now" = "1" ]
             read -p "Podaj minimalną liczbę dni [ np: 7 ] = " min_days
             read -p "Podaj maksymalną liczbę dni [ np: 365 ] = " max_days
             sID=$(get_data_from_server $userID $companyAPI "get_set_monitor^$assetID^$min_days^$max_days^Uptime [dni]")
-            echo "check_uptime_days $sID" >> check.sh
+            echo "check_uptime_days $sID" >> _check.sh
             fi
         fi
 
@@ -541,7 +560,7 @@ if [ "$install_now" = "1" ]
         echo ""
         echo "------------------------------- Pytanie ----------------------------------------- "
         echo ""
-        read -p "Czy chcesz dodać monitoring transferu sieciowego tx/tr dla $interface ? [t/N]" -n 1 -r
+        read -p "Czy chcesz dodać monitoring transferu sieciowego TX/RX ? [t/N]" -n 1 -r
         echo ""
         if [[ $REPLY =~ ^[Tt]$ ]]
             then
@@ -561,9 +580,9 @@ if [ "$install_now" = "1" ]
                     read -p "Podaj maksymalny transfer wysyłania TX dla $interface w kb [ np: 1024 ] = " max_tx
 
                     sID=$(get_data_from_server $userID $companyAPI "get_set_monitor^$assetID^$min_tx^$max_tx^$interface TX")
-                    echo "check_lan_interface_tx $sID '$interface'" >> check.sh
+                    echo "check_lan_interface_tx $sID '$interface'" >> _check.sh
                     sID=$(get_data_from_server $userID $companyAPI "get_set_monitor^$assetID^$min_rx^$max_rx^$interface RX")
-                    echo "check_lan_interface_rx $sID '$interface'" >> check.sh
+                    echo "check_lan_interface_rx $sID '$interface'" >> _check.sh
                     fi
                  done
             fi
@@ -605,7 +624,7 @@ if [ "$install_now" = "1" ]
 		    read -p "Podaj maksymalną liczbę wystąpień danego procesu = " max_count
 
 			sID=$(get_data_from_server $userID $companyAPI "get_set_monitor^$assetID^$min_count^$max_count^Uruchomionych: $processName")
-		    echo "check_running_process_count $sID '$processName'" >> check.sh
+		    echo "check_running_process_count $sID '$processName'" >> _check.sh
 		    fi
 		done
 	    fi
@@ -623,7 +642,7 @@ if [ "$install_now" = "1" ]
 	echo ""
 	echo "------------------------------- Pytanie ----------------------------------------- "
 	echo ""
-	read -p "Czy chcesz dodać sprawdzanie otwartych portów (dla różnych IP) ? [t/N]" -n 1 -r
+	read -p "Czy chcesz dodać sprawdzanie otwartych portów (mogą być też inne adresy IP) ? [t/N]" -n 1 -r
 	echo ""
 	if [[ $REPLY =~ ^[Tt]$ ]]
 	    then
@@ -660,7 +679,7 @@ if [ "$install_now" = "1" ]
 		    else
 			sID=$(get_data_from_server $userID $companyAPI "get_set_monitor^$assetID^1^2^$portDesc")
 			fi
-		    echo "check_port_open $sID $portNo 2 0 $portHost" >> check.sh
+		    echo "check_port_open $sID $portNo 2 0 $portHost" >> _check.sh
 		    fi
 		done
 	    fi
@@ -716,6 +735,9 @@ if [ "$install_now" = "1" ]
     check_package "curl"
     check_package "md5sum"
     check_package "free"
+    check_package "python"
+    check_package "snmp"
+    check_package "nc"
 
     echo ""
     echo "------------------------------- Info    ----------------------------------------- "
@@ -725,6 +747,11 @@ if [ "$install_now" = "1" ]
     echo ""
     echo ""
 
+    rm -rf check.sh
+    mv _check.sh check.sh
+    chmod 777 check.sh
+    service crond restart
+    ./check.sh
     
     exit 1    
     fi
