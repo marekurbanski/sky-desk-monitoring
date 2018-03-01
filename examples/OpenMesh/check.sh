@@ -1,15 +1,5 @@
 #!/bin/sh
 
-#################################################
-#
-# Example script for checkning Open Mesh AP
-# 
-# First are functions
-# At the bottom are function exexuted
-# and all settings
-#
-#################################################
-
 run_shell()
     {
     res=`eval $2`
@@ -86,13 +76,36 @@ check_lan_interface_tx()
     {
 
     interface=$2
-    tx2=`batctl statistics | grep tx_bytes | grep -v mgmt | grep -v frag | cut -d" " -f2`
-    f_tx="/tmp/check_tx"
+    tx2=$(cat "/sys/class/net/${interface}/statistics/tx_bytes")
+    if [ -f "$HOME/.monitoring/${interface}_tx" ]
+        then
+        f_tx="$HOME/.monitoring/${interface}_tx"
+    else
+        f_tx="$HOME/.monitoring/${interface}_tx"
+        echo "0" > $f_tx
+        fi
+
+
+    if [ ! -d $HOME/.monitoring ]
+        then
+        mkdir $HOME/.monitoring
+        echo $tx2 > $f_tx
+        fi
+
+    if [ ! -f "$HOME/.monitoring/${interface}_time_tx" ]
+        then
+        echo "0" > $HOME/.monitoring/${interface}_time_tx
+        fi
+
+    act_time=`date +%s`
+    prev_time=`cat $HOME/.monitoring/${interface}_time_tx`
+    time_diff=$(($act_time - $prev_time))
+    echo $act_time > $HOME/.monitoring/${interface}_time_tx
 
     tx1=`cat $f_tx`
 
     tx_bps=$((tx2 - tx1))
-    tx_kbps=$((tx_bps / 1024))
+    tx_kbps=$((tx_bps / 1024 * 8 / $time_diff))
 
     echo $tx2 > $f_tx
 
@@ -100,18 +113,43 @@ check_lan_interface_tx()
     }
 
 
-
 check_lan_interface_rx()
     {
 
     interface=$2
-    rx2=`batctl statistics | grep rx_bytes | grep -v mgmt | grep -v frag | cut -d" " -f2`
-    f_rx="/tmp/check_rx"
+
+
+
+    rx2=$(cat "/sys/class/net/${interface}/statistics/rx_bytes")
+
+    if [ -f "$HOME/.monitoring/${interface}_rx" ]
+        then
+        f_rx="$HOME/.monitoring/${interface}_rx"
+    else
+        f_rx="$HOME/.monitoring/${interface}_rx"
+        echo "0" > $f_rx
+        fi
+
+    if [ ! -d $HOME/.monitoring ]
+        then
+        mkdir $HOME/.monitoring
+        echo $rx2 > $f_rx
+        fi
+
+    if [ ! -f "$HOME/.monitoring/${interface}_time_rx" ]
+        then
+        echo "0" > $HOME/.monitoring/${interface}_time_rx
+        fi
+
+    act_time=`date +%s`
+    prev_time=`cat $HOME/.monitoring/${interface}_time_rx`
+    time_diff=$(($act_time - $prev_time))
+    echo $act_time > $HOME/.monitoring/${interface}_time_rx
 
     rx1=`cat $f_rx`
 
     rx_bps=$((rx2 - rx1))
-    rx_kbps=$((rx_bps / 1024))
+    rx_kbps=$((rx_bps / 1024 * 8 / $time_diff))
 
     echo $rx2 > $f_rx
 
@@ -121,24 +159,49 @@ check_lan_interface_rx()
 
 
 
-#################################################
-#
-# Settings, obligatory to connect to serwer
-#
 
-url='https://[##SUBDOMAIN##]sky-desk.eu'
-user_id='[##USER_ID##]'
-api_key='[##API_KEY##]'
+url='https://sky-desk.eu'
+user_id='XXX'
+api_key='XXX'
 
 
-#################################################
-#
-#  Functions to run (update params)
-#
-check_memory_usage [#CHECK_ID#]
-check_cpu_load [#CHECK_ID#]
-check_ping [#CHECK_ID#] 'google.com'
-check_lan_interface_tx [#CHECK_ID#]
-check_lan_interface_rx [#CHECK_ID#]
-check_lan_interface_tx_dropped [#CHECK_ID#]
+check_memory_usage 129
+check_cpu_load 130
+check_ping 131 'wp.pl'
+check_lan_interface_tx 132 'eth0'
+check_lan_interface_rx 133 'eth0'
+check_lan_interface_tx_dropped 134
+
+check_lan_interface_tx 145 'p0_1'
+check_lan_interface_tx 146 'bat0'
+check_lan_interface_tx 147 'bat0.1'
+check_lan_interface_tx 148 'bat0.2'
+check_lan_interface_tx 149 'bat0.3'
+check_lan_interface_tx 150 'bat0.989'
+check_lan_interface_tx 151 'br-lan1'
+check_lan_interface_tx 152 'br-lan1.100'
+check_lan_interface_tx 153 'br-lan2'
+check_lan_interface_tx 154 'br-meship'
+check_lan_interface_tx 155 'br-ssid1'
+check_lan_interface_tx 156 'eth1'
+check_lan_interface_tx 157 'ifb_uds'
+check_lan_interface_tx 158 'mesh0'
+check_lan_interface_tx 159 'mon0'
+
+
+check_lan_interface_rx 160 'p0_1'
+check_lan_interface_rx 161 'bat0'
+check_lan_interface_rx 162 'bat0.1'
+check_lan_interface_rx 163 'bat0.2'
+check_lan_interface_rx 164 'bat0.3'
+check_lan_interface_rx 165 'bat0.989'
+check_lan_interface_rx 166 'br-lan1'
+check_lan_interface_rx 167 'br-lan1.100'
+check_lan_interface_rx 168 'br-lan2'
+check_lan_interface_rx 169 'br-meship'
+check_lan_interface_rx 170 'br-ssid1'
+check_lan_interface_rx 171 'eth1'
+check_lan_interface_rx 172 'ifb_uds'
+check_lan_interface_rx 173 'mesh0'
+check_lan_interface_rx 174 'mon0'
 

@@ -1,2 +1,8 @@
 # Created by .ignore support plugin (hsz.mobi)
 .idea
+.data
+scanner.flag
+/.idea/
+include/temporary.settings
+./data
+./data/
