@@ -23,6 +23,7 @@ Podstawowe skrypty:
 # Możliwe parametry uruchamiania:
 # ./setup.sh --update # aktualizacja wszystkich skryptow
 # ./setup.sh --help   # wyświetlenie pliku pomocy (tego pliku)
+# ./setup.sh --config # uruchomienie konfiguratora
 
 ./check.sh
 # skrypt tworzony automatycznie, to on będzie odpowiedzialny za monitorowanie hostów i usług
@@ -104,5 +105,11 @@ check_lan_interface_tx {service_id} {interface}
 
 # sprawdzanie licznby uruchomionych procesow
 check_running_process_count {service_id} {process_name}
+
+# sprawdzanie aktualnego OIDa z SNMP (v.1)
+check_snmp_oid {service_id} {adres_ip} '{OID_STRING}'
+
+# sprawdzanie przyrostowe OIDów z SNMP (v.1)
+check_snmp_oid_increase {service_id} {adres_ip} '{OID_STRING}'
 
 </pre>

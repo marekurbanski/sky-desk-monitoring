@@ -8,6 +8,7 @@
 #####        Uruchom "./setup.sh"                                                        ######
 #####                "./setup.sh --update" - aktualizacja, nie wymaga potwierdzenia      ######
 #####                ".setup.sh --help"    - wyświetlenie pomocy                         ######
+#####                ".setup.sh --config"  - uruchomienie konfiguratora                  ######
 #####                                                                                    ######
 ###############################################################################################
 
@@ -38,7 +39,8 @@ function clear_screen {
       echo "#                                                                                                    #"
       echo "#                                                                                                    #"
       echo "#  Instalator monitoringu                                                                            #"
-      echo "#  ./setup.sh --help   # wyświetlenie pomocy                                                         #"
+      echo "#  ./setup.sh --help      # wyświetlenie pomocy                                                      #"
+      echo "#  ./setup.sh --config    # uruchomienie konfiguratora                                               #"
       echo "#                                                                                                    #"
       echo "#  Postępuj zgodnie z instrukcjami wyświetlanymi na ekranie                                          #"
       echo "#  W razie problemów skontaktuj się z pomocą techniczną lub skorzystaj                               #"
@@ -93,6 +95,27 @@ if [ "$1" = "--update" ]
 
 if [ "$update" = "yes" ]
       then
+
+      if [ -f "${TMPDIR}sky_desk_server" ]
+            then
+            mv ${TMPDIR}sky_desk_server $SCRIPTPATH/include/sky_desk_server
+            sky_desk_server_path=$SCRIPTPATH/include/sky_desk_server
+            fi
+
+      if [ -f sky_desk_server ]
+            then
+            mv sky_desk_server include/
+            sky_desk_server_path=$SCRIPTPATH/include/sky_desk_server
+            fi
+
+      if [ -f "${TMPDIR}sky_desk_server" ]
+            then
+            sky_desk_server_path=$SCRIPTPATH/include/sky_desk_server
+            fi
+
+        sky_desk_server_path=$SCRIPTPATH/include/sky_desk_server
+
+
       vold=`cat version.txt | xargs`
       rm -rf version.txt
       wget --no-check-certificate https://sky-desk.eu/download/monitoring/version.txt
@@ -142,6 +165,12 @@ if [ "$update" = "yes" ]
       wget --no-check-certificate https://sky-desk.eu/download/monitoring/setup.sh
       wget --no-check-certificate https://sky-desk.eu/download/monitoring/scanner.sh
       wget --no-check-certificate https://sky-desk.eu/download/monitoring/include/global_functions.sh
+
+      if [ -f README.md ]
+        then
+        rm -rf README.md
+        fi
+      wget --no-check-certificate https://sky-desk.eu/download/monitoring/README.md
 
       chmod 777 setup.sh
       chmod 777 scanner.sh
@@ -205,7 +234,7 @@ if [ "$update" = "yes" ]
 source $SCRIPTPATH/include/functions.sh
 
 install_now='0'
-if [ ! -d "include" ] || [ ! -f "include/config" ] || [ ! -f "check.sh" ]
+if [ ! -d "include" ] || [ ! -f "include/config" ] || [ ! -f "check.sh" ] || [ "$1" == "--config" ]
         then
         install_now='1'
         fi
@@ -215,6 +244,12 @@ sky_desk_server_path=${TMPDIR}sky_desk_server
 if [ -f "${TMPDIR}sky_desk_server" ]
     then
     mv ${TMPDIR}sky_desk_server $SCRIPTPATH/include/sky_desk_server
+    sky_desk_server_path=$SCRIPTPATH/include/sky_desk_server
+    fi
+
+if [ -f sky_desk_server ]
+    then
+    mv sky_desk_server include/
     sky_desk_server_path=$SCRIPTPATH/include/sky_desk_server
     fi
 
@@ -254,6 +289,13 @@ if [ "$install_now" == "1" ]
               	wget --no-check-certificate https://sky-desk.eu/download/monitoring/include/functions.sh
                 wget --no-check-certificate https://sky-desk.eu/download/monitoring/scanner.sh
                 wget --no-check-certificate https://sky-desk.eu/download/monitoring/include/global_functions.sh
+
+                if [ -f README.md ]
+                    then
+                    rm -rf README.md
+                    fi
+                 wget --no-check-certificate https://sky-desk.eu/download/monitoring/README.md
+
 
               	cat functions.sh > include/functions.sh
                 cat global_functions.sh > include/global_functions.sh

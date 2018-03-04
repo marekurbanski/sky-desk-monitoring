@@ -241,7 +241,9 @@ function save_result {
             then
             url='https://sky-desk.eu'
             fi
-      curl -k "$url/api/?act=monitoring&user_id=$user_id&value=$value&sid=$sid&crc=$crc_md5"
+      domain=`echo $url | sed 's~http[s]*://~~g' | sed 's/\//_/g'`
+      url2=`echo $url | sed 's~http[s]*://~http://~g'`
+      curl -k "$url2:8080/api/?act=monitoring&user_id=$user_id&value=$value&sid=$sid&crc=$crc_md5&domain=$domain&companyID=$companyID"
       }
 
 
@@ -425,10 +427,10 @@ function check_snmp_oid_increase {
             fi
 
       v_prev=`cat $f_prev`
+      echo $v_act > $f_prev
 
       res=$(($v_act - $v_prev))
       res_div=$((rx_bps / $divide))
 
-      echo $v_act > $f_prev
       save_result $1 $res_div
     }
