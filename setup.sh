@@ -305,6 +305,8 @@ if [ "$install_now" == "1" ]
               	chmod 777 include/functions.sh
                 chmod 777 include/global_functions.sh
                 chmod 777 scanner.sh
+
+                source $SCRIPTPATH/include/functions.sh
                 fi
 
 
@@ -349,8 +351,11 @@ if [ "$install_now" == "1" ]
             	do
               clear_screen
             	echo "------------------------------- Pytanie ----------------------------------------- "
-            	echo "#   Podaj adres URL servera Sky-Desk z przedrostkiem HTTPS, [ https://XYZ.sky-desk.eu ], np:"
-            	echo "#   np: 'https://kowalski.sky-desk.eu/index.php'"
+            	echo "#  Podaj adres URL servera Sky-Desk z przedrostkiem https lub bez:"
+            	echo "#  https://xyz.sky-desk.eu "
+            	echo "#  xyz.sky-desk.eu "
+            	echo "#   np:  'https://kowalski.sky-desk.eu'"
+            	echo "#   lub: 'kowalski.sky-desk.eu'"
             	echo ""
             	read -p "URL = " server
             	done

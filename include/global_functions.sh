@@ -93,7 +93,8 @@ function get_data_from_server {
         url='https://sky-desk.eu'
         fi
 
-    r=`curl -s -k "$url/api/?act=monitoring&user_id=$user_id&sid=$sid&crc=$crc_md5&value=$value&url=$url&default_item_group=$default_item_group"`
+    url2=`echo $url | sed 's~http[s]*://~~g'`
+    r=`curl -s -k "https://$url2/api/?act=monitoring&user_id=$user_id&sid=$sid&crc=$crc_md5&value=$value&url=$url&default_item_group=$default_item_group"`
     # echo "-->$r<--"
     rr=`echo $r | xargs`
 

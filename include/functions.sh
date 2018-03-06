@@ -37,9 +37,16 @@ function get_data_from_server {
       url=`cat $sky_desk_server_path`
       if [ "$url" = "" ]
             then
-            url='https://sky-desk.eu'
+            url=$server
+              if [ "$url" = "" ]
+                    then
+                    url='https://sky-desk.eu'
+                    fi
             fi
-      r=`curl -s -k "$url/api/?act=monitoring&user_id=$user_id&sid=$sid&crc=$crc_md5&value=$value&url=$url&default_item_group=$default_item_group"`
+
+      url2=`echo $url | sed 's~http[s]*://~~g'`
+
+      r=`curl -s -k "https://$url2/api/?act=monitoring&user_id=$user_id&sid=$sid&crc=$crc_md5&value=$value&url=$url&default_item_group=$default_item_group"`
       # echo "-->$r<--"
       rr=`echo $r | xargs`
 
@@ -242,8 +249,8 @@ function save_result {
             url='https://sky-desk.eu'
             fi
       domain=`echo $url | sed 's~http[s]*://~~g' | sed 's/\//_/g'`
-      url2=`echo $url | sed 's~http[s]*://~http://~g'`
-      curl -k "$url2:8080/api/?act=monitoring&user_id=$user_id&value=$value&sid=$sid&crc=$crc_md5&domain=$domain&companyID=$companyID"
+      url2=`echo $url | sed 's~http[s]*://~~g'`
+      curl -k "http://$url2:8080/api/?act=monitoring&user_id=$user_id&value=$value&sid=$sid&crc=$crc_md5&domain=$domain&companyID=$companyID"
       }
 
 

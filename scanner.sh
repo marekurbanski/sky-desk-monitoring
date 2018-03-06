@@ -119,7 +119,7 @@ if [ ! -f $SCRIPTPATH/include/config ]
 if [ "$1" == "--scan-all" ]
 	then
     echo "Skanowanie calej sieci"
-    # scan_network
+    scan_network
     if [ "$2" == "--update" ]
       then
         echo "" > $SCRIPTPATH/include/temporary.settings
