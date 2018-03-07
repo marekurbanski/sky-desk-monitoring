@@ -194,16 +194,16 @@ function refresh_arp {
     do
     debug "Znaleziony adres IP=$ip"
     range=`echo $ip | cut -d'.' -f1-3`
-    for i in $(seq 1 1 255)
+    for i in $(seq 1 1 254)
       do
-        ProgressBar $i 255
+        ProgressBar $i 254
         addr="$range.${i}"
         debug "Pinguję adres $addr"
-        ping -c3 -t2 -W 500 $addr 2>&1 >> $SCRIPTPATH/.data/log.txt
+        ping -c2 -t2 -W 500 $addr 2>&1 >> $SCRIPTPATH/.data/log.txt
+        arp -a | grep -v 'incomplete' >> $SCRIPTPATH/.data/ip_lista.txt
       done
       echo ""
     done
-
 }
 
 
@@ -219,7 +219,7 @@ function update_data_in_database {
     if [ ! -f $SCRIPTPATH/include/config ]
         then
         echo "-------------------------------------"
-        echo "-             INFO"
+        echo "- INFO !!!"
         echo "- Bez pliku 'include/config' nie będzie można zaktualizować"
         echo "- danych w systemie Sky-Desk"
         echo "- Uruchom najpierw ./setup.sh i skonfiguruj parametry"
@@ -288,9 +288,19 @@ function get_details_from_nmap {
       echo "MAC = $mac"
       echo "Type = $type"
       echo "Info = $info"
-      echo "Porty"
-      cat $1 | grep "/tcp" | grep -v "Discovered"
-
+      echo "Porty:"
+      echo '' > porty_tmp
+      while IFS='' read -r line || [[ -n "$line" ]]
+        do
+        port1=`echo $line  | grep "/tcp" | grep -v "Discovered"`
+        if [ "$port1" != "" ]
+            then
+            echo "$port1" >> porty_tmp
+            fi
+        done <$1
+        cat porty_tmp | sort | uniq | grep -v "^[[:space:]]*$" > $1.port
+        cat $1.port
+        rm porty_tmp
 
       source $SCRIPTPATH/include/temporary.settings
       source $SCRIPTPATH/include/config
@@ -347,8 +357,17 @@ function get_details_from_nmap {
             update_data_in_database $temp_key "$key_value" 'mac_address' "$mac" 'Adres MAC'
             update_data_in_database $temp_key "$key_value" 'vendor' "$vendor" 'Producent'
             update_data_in_database $temp_key "$key_value" 'system_type' "$system" 'System'
-            update_data_in_database $temp_key "$key_value" 'description' "$info" 'Opis'
+            update_data_in_database $temp_key "$key_value" 'description' "$osdetails; $info" 'Opis'
             update_data_in_database $temp_key "$key_value" 'location' "$location" 'Lokalizacja'
+            update_data_in_database $temp_key "$key_value" 'type' "$type" 'Typ'
+
+            update_data_in_database $temp_key "$key_value" 'remove_ports' "all" 'Wyczyścic listę otwartych portów?'
+            while IFS='' read -r line || [[ -n "$line" ]]
+                do
+                update_data_in_database $temp_key "$key_value" 'add_port' "$line" 'Adres IP'
+                done <$1.port
+
+            update_data_in_database $temp_key "$key_value" 'update_empty_name' "auto" 'Automatyczne rozpoznawanie urządzenia?'
 
             else
             echo "Wystapil blad - nie potrafie wyszukac sprzetu ani go dodac :((("
@@ -474,7 +493,7 @@ if [ ! -f "$SCRIPTPATH/include/config.scanner" ]
     echo "location='Serwerownia'" >> $SCRIPTPATH/include/config.scanner
     echo "" >> $SCRIPTPATH/include/config.scanner
     echo "# Po ustawieni zmiennej na true, scanner za każdym razem zapyta się czy zaktualizować poszczególne dane w systemie Sky-Desk" >> $SCRIPTPATH/include/config.scanner
-    echo "ineractive=true" >> $SCRIPTPATH/include/config.scanner
+    echo "ineractive=false" >> $SCRIPTPATH/include/config.scanner
     echo "" >> $SCRIPTPATH/include/config.scanner
     echo "# [scan-all]" >> $SCRIPTPATH/include/config.scanner
     echo "# Aktualizuj dane porówbując adres MAC / IP" >> $SCRIPTPATH/include/config.scanner
@@ -571,10 +590,17 @@ function valid_ip()
 function scan_network {
 
   rm -rf $SCRIPTPATH/.data/ip_mac.txt
+  echo '' > $SCRIPTPATH/.data/ip_lista.txt
   echo "Proces 1 z 2"
   refresh_arp
-  arp -a | grep -v 'incomplete' > $SCRIPTPATH/.data/ip_lista.txt
 
+  arp -a | grep -v 'incomplete' >> $SCRIPTPATH/.data/ip_lista.txt
+
+  cat $SCRIPTPATH/.data/ip_lista.txt | sort | uniq | grep -v "^[[:space:]]*$" > $SCRIPTPATH/.data/tmp.txt
+  rm $SCRIPTPATH/.data/ip_lista.txt
+  cat $SCRIPTPATH/.data/tmp.txt > $SCRIPTPATH/.data/tmp.txt.log
+  mv $SCRIPTPATH/.data/tmp.txt $SCRIPTPATH/.data/ip_lista.txt
+  cat $SCRIPTPATH/.data/ip_lista.txt > $SCRIPTPATH/.data/ip_lista.txt.log
 	if [ -d "$SCRIPTPATH/.data/IP" ]
 	    then
 	    rm -rf $SCRIPTPATH/.data/IP/*
@@ -583,6 +609,7 @@ function scan_network {
 
   echo "Proces 2 z 2"
   max=`cat $SCRIPTPATH/.data/ip_lista.txt | wc -l | xargs`
+  echo "max = $max" >> $SCRIPTPATH/.data/log.txt
   let i=0
   let max=$max*4
   while IFS='' read -r line || [[ -n "$line" ]]
@@ -600,8 +627,8 @@ function scan_network {
 
       let i=$i+1
       echo "get_data_from_ip $ip $i $max" >> $SCRIPTPATH/.data/log.txt
-	    get_data_from_ip $ip $i $max
-	    echo $mac > $SCRIPTPATH/.data/IP/$ip.mac
+	  get_data_from_ip $ip $i $max
+	  echo $mac > $SCRIPTPATH/.data/IP/$ip.mac
       done < "$SCRIPTPATH/.data/ip_lista.txt"
 
 
